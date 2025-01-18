@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KALAPOTH FLOUR MILLS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subheading {
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        select, input, button {
+            display: block;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-size: 16px;
+        }
+        select, input[type="number"], input[type="text"], input[type="date"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        select {
+            background-color: #f1f1f1;
+        }
+        input[type="number"], input[type="text"], input[type="date"] {
+            background-color: #fff;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 12px 20px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .product-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .product-row > * {
+            margin-right: 10px;
+        }
+        .product-row select {
+            flex: 2;
+            max-width: 150px;
+        }
+        .product-row input {
+            flex: 1;
+            max-width: 120px;
+        }
+        .switches {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .switch {
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+        }
+        .switch input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 5px;
+        }
+        .price-display {
+            flex: 1;
+            font-size: 16px;
+            color: #007bff;
+            text-align: right;
+        }
+        #finalAmount {
+            background-color: #e9ecef;
+            border: 1px solid #ccc;
+            padding: 15px;
+            font-size: 1.5em;
+            text-align: center;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .button-container-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .button-container-bottom {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .customer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .customer-info > * {
+            flex: 1;
+            margin: 0 5px;
+        }
+        .customer-info input[type="text"] {
+            max-width: 250px;
+        }
+        .customer-info input[type="date"] {
+            max-width: 150px;
+        }
+
+        @media print {
+            .button-container-top, .button-container-bottom, #finalAmount {
+                display: none;
+            }
+            .product-row {
+                border: none;
+                background-color: transparent;
+                margin-bottom: 5px;
+            }
+            .customer-info {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>KALAPOTH FLOUR MILLS</h1>
+        <div class="subheading">WEST MUDICKAL , PH: 9846310540</div>
+
+        <!-- Customer name and date fields -->
+        <div class="customer-info">
+            <input type="text" id="customerName" placeholder="Customer Name" />
+            <input type="date" id="billDate" />
+        </div>
+
+        <!-- Top button container for Add and Clear buttons -->
+        <div class="button-container-top">
+            <button type="button" onclick="addProductRow()">Add Product</button>
+            <button type="button" onclick="clearAll()">Clear</button>
+        </div>
+
+        <form id="billingForm">
+            <div id="productEntries">
+                <!-- Product rows will be inserted here dynamically -->
+            </div>
+
+            <!-- Bottom button container for Finish and Print buttons -->
+            <div class="button-container-bottom">
+                <button type="button" onclick="calculateTotal()">Finish</button>
+                <button type="button" onclick="printBill()">Print</button>
+            </div>
+
+            <div id="finalAmount">Total Amount: ₹0.00</div>
+        </form>
+    </div>
+
+<script>
+    const prices = {
+        ari_podi: 60,
+        mulak_podi: 360,
+        kashmiri: 600,
+        malli_podi: 160,
+        manjal_podi: 360,
+        gothamb_podi: 70,
+        ragi_podi: 100,
+        velichenna_kg: 320,
+        velichenna_litre: 300,
+        oldbalance: 1,
+        labour: 1
+    };
+
+    function formatDate(dateStr) {
+        const [year, month, day] = dateStr.split("-");
+        return `${day}-${month}-${year}`;
+    }
+
+    function addProductRow() {
+        const productEntries = document.getElementById('productEntries');
+        const rowIndex = productEntries.children.length + 1;
+
+        const rowHtml = `
+            <div class="product-row">
+                <select name="product${rowIndex}" required onchange="updateProductRow(${rowIndex})">
+                    <option value="" disabled selected>Product</option>
+                    <option value="ari_podi" data-price="60">അരി പൊടി</option>
+                    <option value="mulak_podi" data-price="360"> മുളക് പൊടി</option>
+                    <option value="malli_podi" data-price="160"> മല്ലി പൊടി</option>
+                    <option value="manjal_podi" data-price="360"> മഞ്ഞൾ പൊടി</option>
+                    <option value="gothamb_podi" data-price="70"> ഗോതമ്പ് പൊടി</option>
+                    <option value="ragi_podi" data-price="100"> റാഗി പൊടി</option>
+                    <option value="velichenna_kg" data-price="320"> വെളിച്ചെണ്ണ കിലോ</option>
+                    <option value="velichenna_litre" data-price="300"> വെളിച്ചെണ്ണ ലിറ്റർ</option>
+                    <option value="kashmiri" data-price="600"> കാശ്മീരി മുളക് പൊടി</option>
+                    <option value="oldbalance" data-price="1">OLD BALANCE</option>
+                    <option value="labour" data-price="1">LABOUR CHARGE</option>
+                </select>
+                <div id="detailsSection${rowIndex}">
+                    <input type="number" name="weight${rowIndex}" placeholder="Weight" min="0" step="0.5" required oninput="updatePrice(${rowIndex})">
+                    <div class="switches">
+                        <div class="switch">
+                            <input type="radio" id="weightGram${rowIndex}" name="weightUnit${rowIndex}" value="g" checked onchange="updatePrice(${rowIndex})">
+                            <label for="weightGram${rowIndex}">g</label>
+                        </div>
+                        <div class="switch">
+                            <input type="radio" id="weightKg${rowIndex}" name="weightUnit${rowIndex}" value="kg" onchange="updatePrice(${rowIndex})">
+                            <label for="weightKg${rowIndex}">kg</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="price-display" id="priceDisplay${rowIndex}">₹0.00</div>
+            </div>
+        `;
+        productEntries.insertAdjacentHTML('beforeend', rowHtml);
+    }
+
+    function updateProductRow(rowIndex) {
+    const productSelect = document.querySelector(`select[name="product${rowIndex}"]`);
+    const detailsSection = document.getElementById(`detailsSection${rowIndex}`);
+
+    if (productSelect.value === "oldbalance" || productSelect.value === "labour") {
+        // Replace weight and unit fields with an amount input for OLD BALANCE
+        detailsSection.innerHTML = `
+            <input type="number" name="amount${rowIndex}" placeholder="Amount" min="0" step="0.01" required oninput="updatePrice(${rowIndex})">
+        `;
+    } else if (productSelect.value === "velichenna_litre") {
+        // Replace weight/unit fields with volume input for വെളിച്ചെണ്ണ ലിറ്റർ
+        detailsSection.innerHTML = `
+            <input type="number" name="volume${rowIndex}" placeholder="Volume (L)" min="0" step="0.1" required oninput="updatePrice(${rowIndex})">
+        `;
+    } else {
+        // Default weight and unit fields for other products
+        detailsSection.innerHTML = `
+            <input type="number" name="weight${rowIndex}" placeholder="Weight" min="0" step="0.5" required oninput="updatePrice(${rowIndex})">
+            <div class="switches">
+                <div class="switch">
+                    <input type="radio" id="weightGram${rowIndex}" name="weightUnit${rowIndex}" value="g" checked onchange="updatePrice(${rowIndex})">
+                    <label for="weightGram${rowIndex}">g</label>
+                </div>
+                <div class="switch">
+                    <input type="radio" id="weightKg${rowIndex}" name="weightUnit${rowIndex}" value="kg" onchange="updatePrice(${rowIndex})">
+                    <label for="weightKg${rowIndex}">kg</label>
+                </div>
+            </div>
+        `;
+    }
+    updatePrice(rowIndex);
+}
+
+    function updatePrice(rowIndex) {
+    const productSelect = document.querySelector(`select[name="product${rowIndex}"]`);
+    const priceDisplay = document.getElementById(`priceDisplay${rowIndex}`);
+
+    if (productSelect.value === "oldbalance" || productSelect.value === "labour") {
+        const amountInput = document.querySelector(`input[name="amount${rowIndex}"]`);
+        const amount = parseFloat(amountInput?.value) || 0;
+        priceDisplay.textContent = `₹${amount.toFixed(2)}`;
+    } else if (productSelect.value === "velichenna_litre") {
+        const volumeInput = document.querySelector(`input[name="volume${rowIndex}"]`);
+        const volume = parseFloat(volumeInput?.value) || 0;
+        const pricePerLitre = prices[productSelect.value];
+        const totalPrice = pricePerLitre * volume;
+        priceDisplay.textContent = `₹${totalPrice.toFixed(2)}`;
+    } else {
+        const weightInput = document.querySelector(`input[name="weight${rowIndex}"]`);
+        const weightUnitRadios = document.querySelectorAll(`input[name="weightUnit${rowIndex}"]`);
+        const weightUnit = Array.from(weightUnitRadios).find(radio => radio.checked)?.value;
+
+        if (productSelect.value && weightInput.value) {
+            const pricePerUnit = prices[productSelect.value];
+            const weight = parseFloat(weightInput.value);
+            const weightInKg = weightUnit === 'kg' ? weight : weight / 1000;
+
+            const totalPrice = pricePerUnit * weightInKg;
+            priceDisplay.textContent = `₹${totalPrice.toFixed(2)}`;
+        } else {
+            priceDisplay.textContent = '₹0.00';
+        }
+    }
+}
+    function calculateTotal() {
+        const productEntries = document.getElementById('productEntries');
+        let totalAmount = 0;
+
+        productEntries.querySelectorAll('.product-row').forEach(row => {
+            const productSelect = row.querySelector('select');
+            if (productSelect.value === "oldbalance" || productSelect.value === "labour") {
+                const amountInput = row.querySelector(`input[name^="amount"]`);
+                totalAmount += parseFloat(amountInput?.value) || 0;
+            } else {
+                const weightInput = row.querySelector(`input[name^="weight"]`);
+                const weightUnitRadios = row.querySelectorAll('input[name^="weightUnit"]');
+                const weightUnit = Array.from(weightUnitRadios).find(radio => radio.checked)?.value;
+
+                if (productSelect.value && weightInput.value) {
+                    const pricePerUnit = prices[productSelect.value];
+                    const weight = parseFloat(weightInput.value);
+                    const weightInKg = weightUnit === 'kg' ? weight : weight / 1000;
+                    totalAmount += pricePerUnit * weightInKg;
+                }
+            }
+        });
+
+        document.getElementById('finalAmount').textContent = `Total Amount: ₹${totalAmount.toFixed(2)}`;
+    }
+
+    function clearAll() {
+        document.getElementById('productEntries').innerHTML = '';
+        document.getElementById('finalAmount').textContent = 'Total Amount: ₹0.00';
+    }
+
+    function printBill() {
+        const customerName = document.getElementById('customerName').value || "N/A";
+        const billDate = document.getElementById('billDate').value ? formatDate(document.getElementById('billDate').value) : "N/A";
+        const productEntries = document.getElementById('productEntries');
+        let html = `
+            <html>
+            <head>
+                 <style>
+                        body { font-family: Arial, sans-serif; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f4f4f4; }
+                        .total { font-size: 1.5em; font-weight: bold; text-align: right; margin-top: 20px; }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 10px;
+                        }
+                        .header h1 {
+                            margin: 0;
+                            font-size: 24px;
+                            color: #007bff;
+                        }
+                        .subheading {
+                            font-size: 14px;
+                            color: #333;
+                        }
+                        .customer-info {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 20px;
+                        }
+                    </style>
+               	 </head>
+                <body>
+                    <div class="header">
+                        <h1>KALAPOTH FLOUR MILLS</h1>
+                        <div class="subheading">WEST MUDICKAL , PH: 9846310540</div>
+                    </div>
+	       <br>
+                    <div class="customer-info">
+                        <div>CUSTOMER :  ${customerName}</div>
+                        <div>DATE :  ${billDate}</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ITEM</th>
+                                <th>RATE</th>
+                                <th>WEIGHT</th>
+                                <th>PRICE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            productEntries.querySelectorAll('.product-row').forEach(row => {
+            const productSelect = row.querySelector('select');
+            const priceDisplay = row.querySelector('.price-display');
+
+            if (productSelect.value === "oldbalance" || productSelect.value === "labour") {
+                const amountInput = row.querySelector(`input[name^="amount"]`);
+                html += `
+                    <tr>
+                        <td>${productSelect.options[productSelect.selectedIndex].text}</td>
+                        <td>N/A</td>
+                        <td>${parseFloat(amountInput?.value || 0).toFixed(2)}</td>
+                        <td>${priceDisplay.textContent}</td>
+                    </tr>
+                `;
+            } else {
+                const weightInput = row.querySelector(`input[name^="weight"]`);
+                const weightUnitRadios = row.querySelectorAll('input[name^="weightUnit"]');
+                const weightUnit = Array.from(weightUnitRadios).find(radio => radio.checked)?.value;
+
+                const weightText = weightUnit === 'kg' ? `${parseFloat(weightInput.value)} kg` : `${parseFloat(weightInput.value)} g`;
+                const rate = prices[productSelect.value];
+
+                html += `
+                    <tr>
+                        <td>${productSelect.options[productSelect.selectedIndex].text}</td>
+                        <td>₹${rate}</td>
+                        <td>${weightText}</td>
+                        <td>${priceDisplay.textContent}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        html += `
+                    </tbody>
+                </table>
+                <div class="total">Total: ₹${document.getElementById('finalAmount').textContent.replace('Total Amount: ₹', '')}</div>
+            </body>
+            </html>
+        `;
+
+        const printWindow = window.open('', '', 'width=800,height=600');
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.print();
+    }
+</script>
+</body>
+</html>
